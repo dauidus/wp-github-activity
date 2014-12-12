@@ -7,14 +7,11 @@ Version: 1.0
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
-
 class cf_github_activity {
 	public static $instance = null;
-
 	// has the CSS and JS already been output on this page load?
 	var $css_output = false;
 	var $js_output = false;
-
 	public static function instance() {
 		if (is_null(self::$instance)) {
 			self::$instance = new cf_github_activity;
@@ -22,17 +19,14 @@ class cf_github_activity {
 		return self::$instance;
 	}
 }
-
 function cf_github_activity($username, $excluded = array(), $count = 10, $include_css = true) {
 	$feed = fetch_feed('https://github.com/'.$username.'.atom');
 	if (is_wp_error($feed)) {
 		return '';
 	}
-
 	// disable the default CSS or JS using these filters
 	cf_github_activity::instance()->css_output = apply_filters('cf_github_activity_css_output', cf_github_activity::instance()->css_output);
 	cf_github_activity::instance()->js_output = apply_filters('cf_github_activity_js_output', cf_github_activity::instance()->js_output);
-
 	$html = '';
 	if ($include_css && !cf_github_activity::instance()->css_output) {
 		$html .= cf_github_activity_css();
@@ -64,66 +58,57 @@ function cf_github_activity($username, $excluded = array(), $count = 10, $includ
 	}
 	return $html;
 }
-
 function cf_github_activity_css() {
 ?>
-<style>
-.github-activity-item {
-	border-bottom: 1px solid #eee;
-	font-size: 13px;
-	padding: 10px 0;
-}
-.github-activity-item:first-of-type {
-	padding-top: 0;
-}
-.github-activity-item a {
-	white-space: nowrap;
-}
-.github-activity-item .gravatar {
-	display: none;
-}
-.github-activity-item img {
-	height: 20px;
-	margin-right: 3px;
-	width: 20px;
-}
-.github-activity-item .time {
-	color: #999;
-	font-size: 12px;
-	line-height: 1.2em;
-}
-.github-activity-item .commits {
-	font-size: 12px;
-}
-.github-activity-item .commits ul,
-.github-activity-item .commits ul li {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-}
-.github-activity-item .commits ul li {
-	line-height: 20px;
-	padding-left: 10px;
-}
-.github-activity-item .commits ul li.more {
-	font-size: 12px;
-	padding: 0;
-}
-.github-activity-item .message,
-.github-activity-item .message blockquote {
-	display: inline;
-}
-.github-activity-item .message blockquote {
-	border: 0;
-	font-size: 13px;
-	font-style: normal;
-	margin: 0;
-	padding-left: 3px;
-}
-</style>
+	<style>
+		.github-activity-item .title a:nth-of-type(1),
+		.github-activity-item .commits ul li span,
+		.github-activity-item .details a {
+			display: none;
+		}
+		.github-activity-item blockquote:before,
+		.github-activity-item blockquote:after {
+			content: '"';
+			display: inline;
+			color: #fff;
+			font-size: 13px;
+			padding: 0px;
+			top: 0px;
+			left: 0px;
+		}
+		.github-activity-item blockquote {
+			display: inline;
+			color: #fff;
+			font-size: 13px;
+			padding: 0px;
+		}
+		.github-activity-item .details .commits ul,
+		.github-activity-item .details .commits ul li {
+			list-style: none;
+			display: inline;
+			padding: 0px;
+
+		}
+		.github-activity-item .title,
+		.github-activity-item .details,
+		.github-activity-item .details .commits ul li code {
+			font-size: 13px;
+			display: inline;
+		}
+		.github-activity-item .details .commits ul li code a {
+			display: inline;
+		}
+		.github-activity-item .details .commits ul li code:before {
+			content: '- ';
+			color: #fff;
+			display: inline;
+		}
+		.github-activity-item .time {
+			display: none;
+		}
+	</style>
 <?php
 }
-
 function cf_github_activity_js_fix_urls() {
 	ob_start();
 ?>
@@ -131,16 +116,17 @@ function cf_github_activity_js_fix_urls() {
 jQuery(function($) {
 	$('.github-activity-item a').each(function() {
 		var href = $(this).attr('href');
+		var target = $(this).attr('target');
 		if (href.indexOf('https://') == -1) {
 			$(this).attr('href', 'https://github.com' + href);
 		}
+		$(this).attr('target', '_blank');
 	});
 });
 </script>
 <?php
 	return ob_get_clean();
 }
-
 function cf_github_activity_shortcode($args = array()) {
 	$args = shortcode_atts(array(
 		'username' => null,
@@ -151,14 +137,11 @@ function cf_github_activity_shortcode($args = array()) {
 	if (empty($args['username'])) {
 		return '';
 	}
-
 	$excluded = (!empty($args['excluded']) ? explode(',', $args['excluded']) : array());
 	$excluded = array_unique(array_map('trim', $excluded));
-
 	return cf_github_activity($args['username'], $excluded, $args['count']);
 }
 add_shortcode('github_activity', 'cf_github_activity_shortcode');
-
 class CF_GitHub_Activity_Widget extends WP_Widget {
 	function __construct() {
 		$title = __('GitHub Activity', 'github-activity');
@@ -173,7 +156,6 @@ class CF_GitHub_Activity_Widget extends WP_Widget {
 			)
 		);
 	}
-
 	function form($instance) {
 		$defaults = array(
 			'title' => __('GitHub Activity', 'github-activity'),
@@ -206,7 +188,6 @@ class CF_GitHub_Activity_Widget extends WP_Widget {
 <p class="help"><?php _e('Comma separated - example: "issue_comment, watch". Types are the leading HTML comment in the output HTML.', 'github-activity'); ?></p>
 <?php
 	}
-
 	function update($new_instance, $old_instance) {
 		$instance = $old_instance;
 		$instance['title'] = strip_tags($new_instance['title']);
@@ -218,13 +199,10 @@ class CF_GitHub_Activity_Widget extends WP_Widget {
 		$instance['excluded'] = strip_tags($new_instance['excluded']);
 		return $instance;
 	}
-
 	function widget($args, $instance) {
 		extract($args);
-
 		$excluded = (!empty($instance['excluded']) ? explode(',', $instance['excluded']) : array());
 		$excluded = array_unique(array_map('trim', $excluded));
-
 		echo $before_widget.$before_title.$instance['title'].$after_title;
 		echo cf_github_activity($instance['username'], $excluded, $instance['count']);
 		echo $after_widget;
